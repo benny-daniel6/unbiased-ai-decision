@@ -1,0 +1,39 @@
+# Environment variables (CRITICAL TO IGNORE)
+.env
+.env.*
+!.env.example
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+backend/venv/
+backend/__pycache__/
+pip-log.txt
+
+# Node / Frontend (if not caught by frontend/.gitignore)
+node_modules/
+dist/
+build/
+.firebase/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
