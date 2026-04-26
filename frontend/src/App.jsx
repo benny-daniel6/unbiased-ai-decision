@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import ReportView from './components/ReportView';
 
 // In a real deployment, this comes from an env var.
-const API_URL = 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function App() {
   const [loading, setLoading] = useState(false);
