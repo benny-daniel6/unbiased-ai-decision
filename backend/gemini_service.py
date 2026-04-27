@@ -44,8 +44,6 @@ async def analyze_bias_with_gemini(df: pd.DataFrame, metrics: dict, target_col: 
     
     async with FLASH_SEMAPHORE:
         try:
-            # Note: The new python SDK is synchronous by default unless using async models.
-            # We'll wrap in to_thread to keep fastapi async flow smooth.
             flash_response = await asyncio.to_thread(
                 client.models.generate_content,
                 model='gemini-2.5-flash',
@@ -53,7 +51,16 @@ async def analyze_bias_with_gemini(df: pd.DataFrame, metrics: dict, target_col: 
             )
             technical_analysis = flash_response.text
         except Exception as e:
-            technical_analysis = f"Flash-Lite analysis failed: {str(e)}"
+            print("Error in initial scan (trying fallback):", e)
+            try:
+                flash_response = await asyncio.to_thread(
+                    client.models.generate_content,
+                    model='gemini-2.5-flash-lite',
+                    contents=flash_prompt
+                )
+                technical_analysis = flash_response.text
+            except Exception as e_fallback:
+                technical_analysis = f"Flash analysis failed: {str(e_fallback)}"
             
     # --- STAGE 2: "Senior Consultant" Report (Pro) ---
     pro_prompt = f"""
@@ -85,8 +92,20 @@ async def analyze_bias_with_gemini(df: pd.DataFrame, metrics: dict, target_col: 
             )
             final_report = pro_response.text
         except Exception as e:
-            print("Error in Gemini Pro call:", e)
-            final_report = '{"bias_story": "Failed to generate story.", "remediation_blueprints": ["Failed"]}'
+            print("Error in report generation (trying fallback):", e)
+            try:
+                pro_response = await asyncio.to_thread(
+                    client.models.generate_content,
+                    model='gemini-2.5-flash-lite',
+                    contents=pro_prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                    )
+                )
+                final_report = pro_response.text
+            except Exception as e_fallback:
+                print("Fallback also failed:", e_fallback)
+                final_report = '{"bias_story": "Failed to generate story due to high API demand. Please try again later.", "remediation_blueprints": ["API Unavailable"]}'
              
     import json
     try:
